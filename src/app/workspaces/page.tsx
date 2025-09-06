@@ -130,17 +130,17 @@ export default function WorkspacesPage() {
                       </div>
                       <div className="space-y-1">
                         <Link
-                          href="/books"
+                          href="/materials"
                           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                         >
-                          My Library
+                          My Materials
                         </Link>
                         <Link
-                          href="/books/upload"
+                          href="/materials/upload"
                           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                         >
                           <Plus className="h-4 w-4" />
-                          Upload Book
+                          Add Materials
                         </Link>
                       </div>
                     </div>

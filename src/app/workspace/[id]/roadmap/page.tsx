@@ -207,20 +207,20 @@ export default function RoadmapPage() {
                       </div>
                     </div>
 
-                    {/* Indexed Books Section */}
+                    {/* Indexed Materials Section */}
                     <div>
                       <div className="mb-3 flex items-center gap-2">
                         <Library className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                         <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                          Indexed Books
+                          Indexed Materials
                         </span>
                       </div>
                       <div className="space-y-1">
                         <Link
-                          href="/books"
+                          href="/materials"
                           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                         >
-                          My Library
+                          My Materials
                         </Link>
                       </div>
                     </div>

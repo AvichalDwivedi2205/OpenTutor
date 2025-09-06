@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft,
-  Upload,
   BookOpen,
   FileText,
   Presentation,
@@ -20,6 +19,9 @@ import {
   Plus,
   Trash2,
   Eye,
+  Search,
+  Users,
+  Upload,
   Download,
 } from "lucide-react";
 import Link from "next/link";
@@ -27,7 +29,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "~/hooks/useTheme";
 
 type MaterialType = "book" | "slides" | "document" | "notes";
-type ImportMethod = "upload" | "url";
+type ImportMethod = "upload" | "url" | "workspace";
 
 interface UploadFile {
   id: string;
@@ -48,6 +50,19 @@ interface UrlImport {
   progress: number;
 }
 
+interface WorkspaceMaterial {
+  id: string;
+  title: string;
+  author: string;
+  type: MaterialType;
+  workspaceName: string;
+  uploadedBy: string;
+  uploadedAt: Date;
+  pages?: number;
+  size: string;
+  isSelected: boolean;
+}
+
 export default function AddMaterialPage() {
   const params = useParams();
   const workspaceId = params.id as string;
@@ -55,17 +70,79 @@ export default function AddMaterialPage() {
   const [importMethod, setImportMethod] = useState<ImportMethod>("upload");
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [urlImports, setUrlImports] = useState<UrlImport[]>([]);
+  const [selectedMaterials, setSelectedMaterials] = useState<WorkspaceMaterial[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [titleInput, setTitleInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importSuccess, setImportSuccess] = useState(false);
   const { theme, setTheme, mounted } = useTheme();
+
+  // Mock data for available workspace materials
+  const availableWorkspaceMaterials = useMemo(() => [
+    {
+      id: "1",
+      title: "Pattern Recognition and Machine Learning",
+      author: "Christopher Bishop",
+      type: "book" as MaterialType,
+      workspaceName: "AI Research Lab",
+      uploadedBy: "Dr. Sarah Chen",
+      uploadedAt: new Date("2024-01-15"),
+      pages: 738,
+      size: "45.2 MB",
+      isSelected: false,
+    },
+    {
+      id: "2",
+      title: "Deep Learning Fundamentals",
+      author: "Ian Goodfellow",
+      type: "slides" as MaterialType,
+      workspaceName: "ML Study Group",
+      uploadedBy: "Alex Johnson",
+      uploadedAt: new Date("2024-02-01"),
+      size: "12.8 MB",
+      isSelected: false,
+    },
+    {
+      id: "3",
+      title: "Neural Networks Research Paper",
+      author: "Various Authors",
+      type: "document" as MaterialType,
+      workspaceName: "Research Collective",
+      uploadedBy: "Prof. Michael Davis",
+      uploadedAt: new Date("2024-02-10"),
+      pages: 24,
+      size: "3.4 MB",
+      isSelected: false,
+    },
+    {
+      id: "4",
+      title: "Statistics Study Notes",
+      author: "Student Notes",
+      type: "notes" as MaterialType,
+      workspaceName: "Statistics Class",
+      uploadedBy: "Emma Wilson",
+      uploadedAt: new Date("2024-02-15"),
+      size: "2.1 MB",
+      isSelected: false,
+    },
+  ], []);
+
+  // Filter materials based on search and type
+  const filteredMaterials = availableWorkspaceMaterials.filter((material) => {
+    const matchesSearch = material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         material.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         material.workspaceName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = selectedType === "book" ? true : material.type === selectedType;
+    return matchesSearch && matchesType;
+  });
 
   const materialTypes = [
     {
       type: "book" as MaterialType,
       title: "Books",
-      description:
-        "Upload textbooks, reference books, or academic publications",
+      description: "Upload textbooks, reference books, or academic publications",
       icon: BookOpen,
       acceptedFormats: ".pdf, .epub, .mobi",
       color: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -76,8 +153,7 @@ export default function AddMaterialPage() {
       description: "Upload lecture slides, presentations, or visual materials",
       icon: Presentation,
       acceptedFormats: ".pdf, .ppt, .pptx",
-      color:
-        "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+      color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
     },
     {
       type: "document" as MaterialType,
@@ -85,8 +161,7 @@ export default function AddMaterialPage() {
       description: "Upload research papers, articles, or study guides",
       icon: FileText,
       acceptedFormats: ".pdf, .doc, .docx, .txt",
-      color:
-        "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
+      color: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
     },
     {
       type: "notes" as MaterialType,
@@ -94,8 +169,7 @@ export default function AddMaterialPage() {
       description: "Upload handwritten notes, summaries, or study materials",
       icon: File,
       acceptedFormats: ".pdf, .jpg, .png, .txt",
-      color:
-        "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
+      color: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
     },
   ];
 
@@ -154,48 +228,78 @@ export default function AddMaterialPage() {
     setUrlImports((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const startUpload = async () => {
-    // Simulate upload process for files
-    for (const file of uploadFiles.filter((f) => f.status === "pending")) {
-      setUploadFiles((prev) =>
-        prev.map((f) => (f.id === file.id ? { ...f, status: "uploading" } : f)),
-      );
+  const toggleMaterialSelection = (material: WorkspaceMaterial) => {
+    const isSelected = selectedMaterials.some((m) => m.id === material.id);
+    
+    if (isSelected) {
+      setSelectedMaterials((prev) => prev.filter((m) => m.id !== material.id));
+    } else {
+      setSelectedMaterials((prev) => [...prev, { ...material, isSelected: true }]);
+    }
+  };
 
-      // Simulate progress
-      for (let progress = 0; progress <= 100; progress += 10) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+  const startProcess = async () => {
+    setIsImporting(true);
+
+    if (importMethod === "upload") {
+      // Simulate upload process for files
+      for (const file of uploadFiles.filter((f) => f.status === "pending")) {
         setUploadFiles((prev) =>
-          prev.map((f) => (f.id === file.id ? { ...f, progress } : f)),
+          prev.map((f) => (f.id === file.id ? { ...f, status: "uploading" } : f)),
+        );
+
+        // Simulate progress
+        for (let progress = 0; progress <= 100; progress += 10) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          setUploadFiles((prev) =>
+            prev.map((f) => (f.id === file.id ? { ...f, progress } : f)),
+          );
+        }
+
+        setUploadFiles((prev) =>
+          prev.map((f) => (f.id === file.id ? { ...f, status: "success" } : f)),
         );
       }
-
-      setUploadFiles((prev) =>
-        prev.map((f) => (f.id === file.id ? { ...f, status: "success" } : f)),
-      );
-    }
-
-    // Simulate import process for URLs
-    for (const urlImport of urlImports.filter((u) => u.status === "pending")) {
-      setUrlImports((prev) =>
-        prev.map((u) =>
-          u.id === urlImport.id ? { ...u, status: "importing" } : u,
-        ),
-      );
-
-      // Simulate progress
-      for (let progress = 0; progress <= 100; progress += 20) {
-        await new Promise((resolve) => setTimeout(resolve, 150));
+    } else if (importMethod === "url") {
+      // Simulate import process for URLs
+      for (const urlImport of urlImports.filter((u) => u.status === "pending")) {
         setUrlImports((prev) =>
-          prev.map((u) => (u.id === urlImport.id ? { ...u, progress } : u)),
+          prev.map((u) =>
+            u.id === urlImport.id ? { ...u, status: "importing" } : u,
+          ),
+        );
+
+        // Simulate progress
+        for (let progress = 0; progress <= 100; progress += 20) {
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          setUrlImports((prev) =>
+            prev.map((u) => (u.id === urlImport.id ? { ...u, progress } : u)),
+          );
+        }
+
+        setUrlImports((prev) =>
+          prev.map((u) =>
+            u.id === urlImport.id ? { ...u, status: "success" } : u,
+          ),
         );
       }
-
-      setUrlImports((prev) =>
-        prev.map((u) =>
-          u.id === urlImport.id ? { ...u, status: "success" } : u,
-        ),
-      );
+    } else if (importMethod === "workspace") {
+      // Simulate workspace import
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
+
+    setIsImporting(false);
+    setImportSuccess(true);
+  };
+
+  const resetAll = () => {
+    setUploadFiles([]);
+    setUrlImports([]);
+    setSelectedMaterials([]);
+    setImportSuccess(false);
+    setSearchQuery("");
+    setUrlInput("");
+    setTitleInput("");
   };
 
   const formatFileSize = (bytes: number) => {
@@ -214,6 +318,26 @@ export default function AddMaterialPage() {
     return File;
   };
 
+  const hasContent = () => {
+    if (importMethod === "upload") return uploadFiles.length > 0;
+    if (importMethod === "url") return urlImports.length > 0;
+    if (importMethod === "workspace") return selectedMaterials.length > 0;
+    return false;
+  };
+
+  const hasPendingItems = () => {
+    if (importMethod === "upload") return uploadFiles.some((f) => f.status === "pending");
+    if (importMethod === "url") return urlImports.some((u) => u.status === "pending");
+    if (importMethod === "workspace") return selectedMaterials.length > 0;
+    return false;
+  };
+
+  const hasSuccessItems = () => {
+    if (importMethod === "upload") return uploadFiles.some((f) => f.status === "success");
+    if (importMethod === "url") return urlImports.some((u) => u.status === "success");
+    return false;
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFF] dark:bg-[#070B14]">
       {/* Header */}
@@ -229,7 +353,7 @@ export default function AddMaterialPage() {
             <div>
               <h1 className="text-2xl font-bold">Add Learning Material</h1>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Upload books, slides, documents, or study materials
+                Upload files, or import from other workspaces
               </p>
             </div>
           </div>
@@ -315,22 +439,23 @@ export default function AddMaterialPage() {
                     </div>
                   </div>
                 </button>
+                
                 <button
-                  onClick={() => setImportMethod("url")}
+                  onClick={() => setImportMethod("workspace")}
                   className={`w-full rounded-lg border-2 p-4 text-left transition ${
-                    importMethod === "url"
+                    importMethod === "workspace"
                       ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
                       : "border-black/10 hover:border-sky-300 dark:border-white/10 dark:hover:border-sky-700"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400">
-                      <Globe className="h-4 w-4" />
+                    <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400">
+                      <Users className="h-4 w-4" />
                     </div>
                     <div>
-                      <h3 className="font-medium">Import from URL</h3>
+                      <h3 className="font-medium">Import from Workspace</h3>
                       <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Import from web links
+                        Import materials shared by others
                       </p>
                     </div>
                   </div>
@@ -339,15 +464,15 @@ export default function AddMaterialPage() {
             </div>
           </div>
 
-          {/* Right Column - Upload/Import Area */}
+          {/* Right Column - Content Area */}
           <div className="space-y-6 lg:col-span-2">
-            {/* Upload/Import Area */}
+            {/* Main Content Area */}
             <div className="rounded-xl border border-black/10 bg-white/80 p-6 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">
-                  {importMethod === "upload"
-                    ? "Upload Files"
-                    : "Import from URL"}
+                  {importMethod === "upload" && "Upload Files"}
+                  {importMethod === "url" && "Import from URL"}
+                  {importMethod === "workspace" && "Available Materials"}
                 </h2>
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                   <Folder className="h-4 w-4" />
@@ -355,8 +480,8 @@ export default function AddMaterialPage() {
                 </div>
               </div>
 
-              {importMethod === "upload" ? (
-                /* File Upload */
+              {/* File Upload */}
+              {importMethod === "upload" && (
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -373,18 +498,12 @@ export default function AddMaterialPage() {
                   </h3>
                   <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
                     Supported formats:{" "}
-                    {
-                      materialTypes.find((t) => t.type === selectedType)
-                        ?.acceptedFormats
-                    }
+                    {materialTypes.find((t) => t.type === selectedType)?.acceptedFormats}
                   </p>
                   <input
                     type="file"
                     multiple
-                    accept={
-                      materialTypes.find((t) => t.type === selectedType)
-                        ?.acceptedFormats
-                    }
+                    accept={materialTypes.find((t) => t.type === selectedType)?.acceptedFormats}
                     onChange={(e) => handleFileSelect(e.target.files)}
                     className="hidden"
                     id="file-upload"
@@ -397,8 +516,10 @@ export default function AddMaterialPage() {
                     Choose Files
                   </label>
                 </div>
-              ) : (
-                /* URL Import */
+              )}
+
+              {/* URL Import */}
+              {importMethod === "url" && (
                 <div className="space-y-4">
                   <div className="rounded-lg border border-black/10 p-6 dark:border-white/10">
                     <div className="mb-4 flex items-center gap-3">
@@ -407,9 +528,7 @@ export default function AddMaterialPage() {
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          URL
-                        </label>
+                        <label className="mb-2 block text-sm font-medium">URL</label>
                         <input
                           type="url"
                           value={urlInput}
@@ -419,9 +538,7 @@ export default function AddMaterialPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          Title
-                        </label>
+                        <label className="mb-2 block text-sm font-medium">Title</label>
                         <input
                           type="text"
                           value={titleInput}
@@ -443,20 +560,105 @@ export default function AddMaterialPage() {
                 </div>
               )}
 
+              {/* Workspace Import */}
+              {importMethod === "workspace" && (
+                <div className="space-y-4">
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search materials, authors, or workspaces..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full rounded-lg border border-black/10 bg-white/50 py-2 pr-4 pl-10 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 focus:outline-none dark:border-white/10 dark:bg-slate-800 dark:text-white"
+                    />
+                  </div>
+
+                  {/* Materials List */}
+                  <div className="space-y-3">
+                    {filteredMaterials.length === 0 ? (
+                      <div className="rounded-lg border border-black/10 p-8 text-center dark:border-white/10">
+                        <Folder className="mx-auto mb-4 h-12 w-12 text-slate-400" />
+                        <h3 className="mb-2 text-lg font-medium">No materials found</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          {searchQuery 
+                            ? `No materials match "${searchQuery}"`
+                            : "No materials available for the selected type"
+                          }
+                        </p>
+                      </div>
+                    ) : (
+                      filteredMaterials.map((material) => {
+                        const isSelected = selectedMaterials.some((m) => m.id === material.id);
+                        const Icon = materialTypes.find((t) => t.type === material.type)?.icon ?? File;
+                        
+                        return (
+                          <motion.div
+                            key={material.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`cursor-pointer rounded-lg border-2 p-4 transition ${
+                              isSelected
+                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                : "border-black/10 hover:border-sky-300 dark:border-white/10 dark:hover:border-sky-700"
+                            }`}
+                            onClick={() => toggleMaterialSelection(material)}
+                          >
+                            <div className="flex items-start gap-4">
+                              <div className={`inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg ${
+                                materialTypes.find((t) => t.type === material.type)?.color ?? "bg-gray-100 text-gray-600"
+                              }`}>
+                                <Icon className="h-6 w-6" />
+                              </div>
+                              
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h3 className="font-semibold">{material.title}</h3>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                                      by {material.author}
+                                    </p>
+                                  </div>
+                                  {isSelected && (
+                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-white">
+                                      <Check className="h-4 w-4" />
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="mt-2 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                                  <span className="flex items-center gap-1">
+                                    <Users className="h-3 w-3" />
+                                    {material.workspaceName}
+                                  </span>
+                                  <span>Shared by {material.uploadedBy}</span>
+                                  <span>{material.size}</span>
+                                  {material.pages && <span>{material.pages} pages</span>}
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Items List */}
-              {(uploadFiles.length > 0 || urlImports.length > 0) && (
+              {hasContent() && (
                 <div className="mt-6">
                   <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-medium">
-                      {importMethod === "upload"
-                        ? "Selected Files"
-                        : "URLs to Import"}
+                      {importMethod === "upload" && "Selected Files"}
+                      {importMethod === "url" && "URLs to Import"}
+                      {importMethod === "workspace" && "Selected Materials"}
                     </h3>
                     <div className="text-sm text-slate-600 dark:text-slate-400">
-                      {importMethod === "upload"
-                        ? uploadFiles.length
-                        : urlImports.length}{" "}
-                      items
+                      {importMethod === "upload" && `${uploadFiles.length} items`}
+                      {importMethod === "url" && `${urlImports.length} items`}
+                      {importMethod === "workspace" && `${selectedMaterials.length} items`}
                     </div>
                   </div>
 
@@ -478,13 +680,9 @@ export default function AddMaterialPage() {
                                 {uploadFile.file.name}
                               </p>
                               <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                                <span>
-                                  {formatFileSize(uploadFile.file.size)}
-                                </span>
+                                <span>{formatFileSize(uploadFile.file.size)}</span>
                                 <span>•</span>
-                                <span className="capitalize">
-                                  {uploadFile.type}
-                                </span>
+                                <span className="capitalize">{uploadFile.type}</span>
                               </div>
                               {uploadFile.status === "uploading" && (
                                 <div className="mt-2">
@@ -495,9 +693,7 @@ export default function AddMaterialPage() {
                                   <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700">
                                     <div
                                       className="h-1 rounded-full bg-sky-500 transition-all"
-                                      style={{
-                                        width: `${uploadFile.progress}%`,
-                                      }}
+                                      style={{ width: `${uploadFile.progress}%` }}
                                     />
                                   </div>
                                 </div>
@@ -541,15 +737,11 @@ export default function AddMaterialPage() {
                             <Globe className="h-5 w-5" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-medium">
-                              {urlImport.title}
-                            </p>
+                            <p className="truncate font-medium">{urlImport.title}</p>
                             <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                               <span className="truncate">{urlImport.url}</span>
                               <span>•</span>
-                              <span className="capitalize">
-                                {urlImport.type}
-                              </span>
+                              <span className="capitalize">{urlImport.type}</span>
                             </div>
                             {urlImport.status === "importing" && (
                               <div className="mt-2">
@@ -589,32 +781,72 @@ export default function AddMaterialPage() {
                           </div>
                         </motion.div>
                       ))}
+
+                    {/* Workspace materials */}
+                    {importMethod === "workspace" &&
+                      selectedMaterials.map((material) => (
+                        <div key={material.id} className="flex items-center justify-between rounded-lg bg-sky-50 p-3 dark:bg-sky-900/20">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-white">
+                              <Check className="h-3 w-3" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{material.title}</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">
+                                from {material.workspaceName}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => toggleMaterialSelection(material)}
+                            className="rounded-lg p-1 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
                   </div>
 
                   {/* Action Button */}
-                  {((importMethod === "upload" &&
-                    uploadFiles.some((f) => f.status === "pending")) ||
-                    (importMethod === "url" &&
-                      urlImports.some((u) => u.status === "pending"))) && (
+                  {hasPendingItems() && (
                     <div className="mt-6 flex items-center justify-between">
                       <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {importMethod === "upload"
-                          ? `${uploadFiles.filter((f) => f.status === "pending").length} files ready to upload`
-                          : `${urlImports.filter((u) => u.status === "pending").length} URLs ready to import`}
+                        {importMethod === "upload" && `${uploadFiles.filter((f) => f.status === "pending").length} files ready to upload`}
+                        {importMethod === "url" && `${urlImports.filter((u) => u.status === "pending").length} URLs ready to import`}
+                        {importMethod === "workspace" && `${selectedMaterials.length} materials ready to import`}
                       </p>
                       <button
-                        onClick={startUpload}
-                        className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+                        onClick={startProcess}
+                        disabled={isImporting}
+                        className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {importMethod === "upload" ? (
+                        {isImporting ? (
                           <>
-                            <Upload className="h-4 w-4" />
-                            Start Upload
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            {importMethod === "upload" && "Uploading..."}
+                            {importMethod === "url" && "Importing..."}
+                            {importMethod === "workspace" && "Importing..."}
                           </>
                         ) : (
                           <>
-                            <Download className="h-4 w-4" />
-                            Start Import
+                            {importMethod === "upload" && (
+                              <>
+                                <Upload className="h-4 w-4" />
+                                Start Upload
+                              </>
+                            )}
+                            {importMethod === "url" && (
+                              <>
+                                <Download className="h-4 w-4" />
+                                Start Import
+                              </>
+                            )}
+                            {importMethod === "workspace" && (
+                              <>
+                                <Plus className="h-4 w-4" />
+                                Import Materials
+                              </>
+                            )}
                           </>
                         )}
                       </button>
@@ -625,8 +857,7 @@ export default function AddMaterialPage() {
             </div>
 
             {/* Success Summary */}
-            {(uploadFiles.some((f) => f.status === "success") ||
-              urlImports.some((u) => u.status === "success")) && (
+            {(importSuccess || hasSuccessItems()) && (
               <div className="rounded-xl border border-green-200 bg-green-50 p-6 dark:border-green-800 dark:bg-green-900/20">
                 <div className="mb-4 flex items-center gap-3">
                   <Check className="h-6 w-6 text-green-600" />
@@ -635,9 +866,8 @@ export default function AddMaterialPage() {
                   </h3>
                 </div>
                 <p className="mb-4 text-sm text-green-700 dark:text-green-300">
-                  Your materials have been processed and are now available in
-                  your workspace. They will be used to enhance AI-generated
-                  content and recommendations.
+                  Your materials have been processed and are now available in your workspace. 
+                  They will be used to enhance AI-generated content and recommendations.
                 </p>
                 <div className="flex items-center gap-2">
                   <Link
@@ -648,10 +878,7 @@ export default function AddMaterialPage() {
                     Back to Workspace
                   </Link>
                   <button
-                    onClick={() => {
-                      setUploadFiles([]);
-                      setUrlImports([]);
-                    }}
+                    onClick={resetAll}
                     className="inline-flex items-center gap-2 rounded-lg border border-green-600 px-4 py-2 text-sm font-medium text-green-600 hover:bg-green-50 dark:border-green-400 dark:text-green-400 dark:hover:bg-green-900/20"
                   >
                     <Plus className="h-4 w-4" />
@@ -666,42 +893,50 @@ export default function AddMaterialPage() {
         {/* Instructions */}
         <div className="mt-8 rounded-xl border border-black/10 bg-white/80 p-6 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
           <h2 className="mb-4 text-lg font-semibold">How it works</h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-4">
-            <div className="text-center">
-              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400">
-                1
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400">
+                <span className="text-sm font-bold">1</span>
               </div>
-              <h3 className="mb-1 font-medium">Select Type</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Choose the type of material you&apos;re adding
-              </p>
+              <div>
+                <h3 className="mb-1 font-medium">Select Type</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Choose the type of material you&apos;re adding
+                </p>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400">
-                2
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400">
+                <span className="text-sm font-bold">2</span>
               </div>
-              <h3 className="mb-1 font-medium">Choose Method</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Upload files or import from URLs
-              </p>
+              <div>
+                <h3 className="mb-1 font-medium">Choose Method</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Upload files, or import from workspaces
+                </p>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400">
-                3
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400">
+                <span className="text-sm font-bold">3</span>
               </div>
-              <h3 className="mb-1 font-medium">Add Materials</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Upload your files or add URLs with titles
-              </p>
+              <div>
+                <h3 className="mb-1 font-medium">Add Materials</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Upload your files, or select from workspaces
+                </p>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400">
-                4
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400">
+                <span className="text-sm font-bold">4</span>
               </div>
-              <h3 className="mb-1 font-medium">AI Processing</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Materials are processed for AI-enhanced learning
-              </p>
+              <div>
+                <h3 className="mb-1 font-medium">AI Processing</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Materials are processed for AI-enhanced learning
+                </p>
+              </div>
             </div>
           </div>
         </div>
