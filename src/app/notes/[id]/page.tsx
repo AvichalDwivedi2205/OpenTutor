@@ -2,14 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, FileText, Search, Plus, Menu, X } from 'lucide-react'
+import { useParams } from 'next/navigation'
+import { ArrowLeft, FileText, Search, Plus, Menu, X, Sun, Moon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import TiptapEditor from '~/components/editor/TiptapEditor'
-
-interface NotesPageProps {
-  params: { id: string }
-  searchParams?: Record<string, string | string[] | undefined>
-}
+import { useTheme } from '~/hooks/useTheme'
 
 // Mock workspace notes data
 const mockWorkspaceNotes = [
@@ -43,10 +40,17 @@ const mockWorkspaceNotes = [
   }
 ]
 
-export default function NotesPage({ params }: NotesPageProps) {
-  const { id } = params
+export default function NotesPage() {
+  const params = useParams()
+  const id = params.id as string
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const { theme, setTheme, mounted } = useTheme()
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return null
+  }
 
   // Find current note
   const currentNote = mockWorkspaceNotes.find(note => note.id === id)
@@ -64,7 +68,7 @@ export default function NotesPage({ params }: NotesPageProps) {
       {
         type: 'heading',
         attrs: { level: 1 },
-        content: [{ type: 'text', text: currentNote?.title || 'Welcome to your note' }]
+        content: [{ type: 'text', text: currentNote?.title ?? 'Welcome to your note' }]
       },
       {
         type: 'paragraph',
@@ -167,7 +171,11 @@ export default function NotesPage({ params }: NotesPageProps) {
                           {note.preview}
                         </p>
                         <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                          <span>{note.updatedAt.toLocaleDateString()}</span>
+                          <span>{note.updatedAt.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}</span>
                           <span>{note.wordCount} words</span>
                         </div>
                       </Link>
@@ -202,9 +210,25 @@ export default function NotesPage({ params }: NotesPageProps) {
                 <div className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                   <h1 className="text-xl font-semibold">
-                    {currentNote?.title || `Note ${id}`}
+                    {currentNote?.title ?? `Note ${id}`}
                   </h1>
                 </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {mounted && (
+                  <button
+                    onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                    className="rounded-lg p-2 hover:bg-black/5 dark:hover:bg-white/5"
+                    aria-label="Toggle theme"
+                  >
+                    {theme === "light" ? (
+                      <Moon className="h-5 w-5" />
+                    ) : (
+                      <Sun className="h-5 w-5" />
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </header>
