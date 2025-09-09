@@ -18,9 +18,6 @@ import {
   Clock,
   Calendar,
   Tag,
-  Star,
-  Edit3,
-  Eye,
   FolderOpen
 } from "lucide-react";
 import Link from "next/link";
@@ -524,86 +521,63 @@ export default function WorkspacePage() {
                   {filteredNotes.length > 0 ? (
                     <div className="space-y-4">
                       {filteredNotes.map((note, index) => (
-                        <motion.div
+                        <Link
                           key={note.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                          className="group rounded-xl border border-black/10 bg-white/80 p-6 backdrop-blur-sm transition hover:border-sky-200 hover:shadow-lg dark:border-white/10 dark:bg-white/5 dark:hover:border-sky-800"
+                          href={`/notes/${note.id}`}
+                          className="block"
                         >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h3 className="font-semibold text-lg group-hover:text-sky-600 dark:group-hover:text-sky-400">
-                                  {note.title}
-                                </h3>
-                                {note.topicTitle && (
-                                  <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700 dark:bg-sky-900 dark:text-sky-300">
-                                    {note.topicTitle}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
-                                {note.preview}
-                              </p>
-                              
-                              {/* Tags */}
-                              {note.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mb-3">
-                                  {note.tags.map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                                    >
-                                      <Tag className="h-3 w-3" />
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </div>
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                            className="group rounded-xl border border-black/10 bg-white/80 p-6 backdrop-blur-sm transition hover:border-sky-200 hover:shadow-lg dark:border-white/10 dark:bg-white/5 dark:hover:border-sky-800 cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-lg group-hover:text-sky-600 dark:group-hover:text-sky-400">
+                                {note.title}
+                              </h3>
+                              {note.topicTitle && (
+                                <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700 dark:bg-sky-900 dark:text-sky-300">
+                                  {note.topicTitle}
+                                </span>
                               )}
+                            </div>
+                            <p className="text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
+                              {note.preview}
+                            </p>
+                            
+                            {/* Tags */}
+                            {note.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mb-3">
+                                {note.tags.map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                                  >
+                                    <Tag className="h-3 w-3" />
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
 
-                              {/* Metadata */}
-                              <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {mounted ? note.updatedAt.toLocaleDateString() : '...'}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <FileText className="h-3 w-3" />
-                                  {note.wordCount} words
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {note.readTime} min read
-                                </div>
+                            {/* Metadata */}
+                            <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {mounted ? note.updatedAt.toLocaleDateString() : '...'}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <FileText className="h-3 w-3" />
+                                {note.wordCount} words
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {note.readTime} min read
                               </div>
                             </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Link
-                                href={`/workspace/${workspaceId}/notes/${note.id}`}
-                                className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                title="View note"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                              <Link
-                                href={`/workspace/${workspaceId}/notes/${note.id}/edit`}
-                                className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                title="Edit note"
-                              >
-                                <Edit3 className="h-4 w-4" />
-                              </Link>
-                              <button
-                                className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                title="Star note"
-                              >
-                                <Star className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </motion.div>
+                          </motion.div>
+                        </Link>
                       ))}
                     </div>
                   ) : (

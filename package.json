@@ -23,6 +23,14 @@
     "@clerk/nextjs": "^6.30.0",
     "@supabase/supabase-js": "^2.56.0",
     "@t3-oss/env-nextjs": "^0.12.0",
+    "@tiptap/extension-code-block": "^3.4.1",
+    "@tiptap/extension-heading": "^3.4.1",
+    "@tiptap/extension-mention": "^3.4.1",
+    "@tiptap/extension-placeholder": "^3.4.1",
+    "@tiptap/pm": "^3.4.1",
+    "@tiptap/react": "^3.4.1",
+    "@tiptap/starter-kit": "^3.4.1",
+    "@tiptap/suggestion": "^3.4.1",
     "drizzle-orm": "^0.41.0",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.539.0",
@@ -30,6 +38,7 @@
     "postgres": "^3.4.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tippy.js": "^6.3.7",
     "zod": "^3.24.2"
   },
   "devDependencies": {
