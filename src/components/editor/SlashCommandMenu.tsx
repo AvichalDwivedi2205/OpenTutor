@@ -1,17 +1,6 @@
 'use client'
 
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
-import { 
-  Heading1, 
-  Heading2, 
-  Heading3, 
-  Type, 
-  List, 
-  ListOrdered, 
-  Code, 
-  Quote,
-  Minus
-} from 'lucide-react'
 
 interface SlashCommandItem {
   title: string

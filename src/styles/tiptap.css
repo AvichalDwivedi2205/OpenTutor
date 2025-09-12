@@ -6,12 +6,18 @@
   background: transparent;
 }
 
+/* Headings */
 .tiptap-editor .ProseMirror h1 {
   font-size: 2rem;
   font-weight: 700;
   margin-top: 2rem;
   margin-bottom: 1rem;
   line-height: 1.2;
+  color: #1e293b;
+}
+
+.dark .tiptap-editor .ProseMirror h1 {
+  color: #f1f5f9;
 }
 
 .tiptap-editor .ProseMirror h2 {
@@ -20,6 +26,11 @@
   margin-top: 1.75rem;
   margin-bottom: 0.875rem;
   line-height: 1.3;
+  color: #334155;
+}
+
+.dark .tiptap-editor .ProseMirror h2 {
+  color: #e2e8f0;
 }
 
 .tiptap-editor .ProseMirror h3 {
@@ -28,6 +39,11 @@
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   line-height: 1.4;
+  color: #475569;
+}
+
+.dark .tiptap-editor .ProseMirror h3 {
+  color: #cbd5e1;
 }
 
 .tiptap-editor .ProseMirror h4 {
@@ -36,6 +52,11 @@
   margin-top: 1.25rem;
   margin-bottom: 0.625rem;
   line-height: 1.4;
+  color: #64748b;
+}
+
+.dark .tiptap-editor .ProseMirror h4 {
+  color: #94a3b8;
 }
 
 .tiptap-editor .ProseMirror h5 {
@@ -44,6 +65,11 @@
   margin-top: 1.125rem;
   margin-bottom: 0.5625rem;
   line-height: 1.4;
+  color: #64748b;
+}
+
+.dark .tiptap-editor .ProseMirror h5 {
+  color: #94a3b8;
 }
 
 .tiptap-editor .ProseMirror h6 {
@@ -52,13 +78,25 @@
   margin-top: 1rem;
   margin-bottom: 0.5rem;
   line-height: 1.4;
+  color: #64748b;
 }
 
+.dark .tiptap-editor .ProseMirror h6 {
+  color: #94a3b8;
+}
+
+/* Paragraphs */
 .tiptap-editor .ProseMirror p {
   margin-bottom: 1rem;
   line-height: 1.6;
+  color: #334155;
 }
 
+.dark .tiptap-editor .ProseMirror p {
+  color: #cbd5e1;
+}
+
+/* Lists */
 .tiptap-editor .ProseMirror ul,
 .tiptap-editor .ProseMirror ol {
   margin-bottom: 1rem;
@@ -68,6 +106,11 @@
 .tiptap-editor .ProseMirror li {
   margin-bottom: 0.25rem;
   line-height: 1.6;
+  color: #334155;
+}
+
+.dark .tiptap-editor .ProseMirror li {
+  color: #cbd5e1;
 }
 
 .tiptap-editor .ProseMirror ul li {
@@ -78,6 +121,7 @@
   list-style-type: decimal;
 }
 
+/* Code blocks */
 .tiptap-editor .ProseMirror pre {
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
@@ -96,25 +140,161 @@
   color: #e2e8f0;
 }
 
+/* Inline code */
 .tiptap-editor .ProseMirror code {
   background-color: #f1f5f9;
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.875rem;
+  color: #e11d48;
 }
 
 .dark .tiptap-editor .ProseMirror code {
   background-color: #334155;
-  color: #e2e8f0;
+  color: #fbbf24;
 }
 
+/* Text formatting */
 .tiptap-editor .ProseMirror strong {
   font-weight: 600;
 }
 
 .tiptap-editor .ProseMirror em {
   font-style: italic;
+}
+
+.tiptap-editor .ProseMirror u {
+  text-decoration: underline;
+}
+
+.tiptap-editor .ProseMirror s {
+  text-decoration: line-through;
+}
+
+/* Links */
+.tiptap-editor .ProseMirror a {
+  color: #0ea5e9;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tiptap-editor .ProseMirror a:hover {
+  color: #0284c7;
+}
+
+.dark .tiptap-editor .ProseMirror a {
+  color: #38bdf8;
+}
+
+.dark .tiptap-editor .ProseMirror a:hover {
+  color: #0ea5e9;
+}
+
+/* Blockquotes */
+.tiptap-editor .ProseMirror blockquote {
+  border-left: 4px solid #e2e8f0;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #64748b;
+}
+
+.dark .tiptap-editor .ProseMirror blockquote {
+  border-left-color: #475569;
+  color: #94a3b8;
+}
+
+/* Horizontal rules */
+.tiptap-editor .ProseMirror hr {
+  border: none;
+  border-top: 2px solid #e2e8f0;
+  margin: 2rem 0;
+}
+
+.dark .tiptap-editor .ProseMirror hr {
+  border-top-color: #475569;
+}
+
+/* Images */
+.tiptap-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin: 1rem 0;
+}
+
+/* Tables */
+.tiptap-editor .ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.tiptap-editor .ProseMirror table td,
+.tiptap-editor .ProseMirror table th {
+  min-width: 1em;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.dark .tiptap-editor .ProseMirror table td,
+.dark .tiptap-editor .ProseMirror table th {
+  border-color: #475569;
+}
+
+.tiptap-editor .ProseMirror table th {
+  font-weight: 600;
+  text-align: left;
+  background-color: #f8fafc;
+}
+
+.dark .tiptap-editor .ProseMirror table th {
+  background-color: #1e293b;
+}
+
+.tiptap-editor .ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(59, 130, 246, 0.1);
+  pointer-events: none;
+}
+
+/* Highlight */
+.tiptap-editor .ProseMirror mark {
+  background-color: #fef08a;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.dark .tiptap-editor .ProseMirror mark {
+  background-color: #ca8a04;
+  color: #fef3c7;
+}
+
+/* Text alignment */
+.tiptap-editor .ProseMirror [data-text-align="left"] {
+  text-align: left;
+}
+
+.tiptap-editor .ProseMirror [data-text-align="center"] {
+  text-align: center;
+}
+
+.tiptap-editor .ProseMirror [data-text-align="right"] {
+  text-align: right;
+}
+
+.tiptap-editor .ProseMirror [data-text-align="justify"] {
+  text-align: justify;
 }
 
 /* Placeholder styles */
@@ -124,6 +304,10 @@
   color: #9ca3af;
   pointer-events: none;
   height: 0;
+}
+
+.dark .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  color: #6b7280;
 }
 
 /* Focus styles */

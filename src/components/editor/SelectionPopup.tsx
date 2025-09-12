@@ -102,7 +102,7 @@ export default function SelectionPopup({
         
         {selectedText.length > 50 && (
           <div className="mt-2 px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs text-slate-600 dark:text-slate-400">
-            "{selectedText.substring(0, 50)}..."
+            &ldquo;{selectedText.substring(0, 50)}...&rdquo;
           </div>
         )}
       </motion.div>
