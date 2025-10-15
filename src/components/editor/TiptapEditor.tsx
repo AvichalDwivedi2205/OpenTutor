@@ -108,12 +108,15 @@ export default function TiptapEditor({
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
   // Persistence: Load content from localStorage for demo
-  const storedContent = useMemo(() => {
+  const storedContent = useMemo<JSONContent | null>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(`note-${noteId}`)
       if (saved) {
         try {
-          return JSON.parse(saved)
+          const parsed = JSON.parse(saved) as unknown
+          if (parsed && typeof parsed === 'object') {
+            return parsed as JSONContent
+          }
         } catch {
           return null
         }
@@ -422,7 +425,8 @@ export default function TiptapEditor({
   const setLink = useCallback(() => {
     if (!editor) return
     
-    const previousUrl = editor.getAttributes('link').href
+    const attrs = editor.getAttributes('link') as Record<string, unknown>
+    const previousUrl = typeof attrs.href === 'string' ? attrs.href : undefined
     const url = window.prompt('URL', previousUrl)
 
     // cancelled
